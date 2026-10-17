@@ -37,4 +37,10 @@ public class CuentaController {
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_GESTOR"));
         return ResponseEntity.ok(cuentaService.consultarPorNumero(numero, authentication.getName(), manager));
     }
+
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<List<CuentaResponse>> listarPorCliente(
+            @PathVariable Long clienteId) {
+        return ResponseEntity.ok(cuentaService.listarPorCliente(clienteId));
+    }
 }
