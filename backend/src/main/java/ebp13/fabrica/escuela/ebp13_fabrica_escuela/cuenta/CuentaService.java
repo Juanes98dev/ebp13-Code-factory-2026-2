@@ -7,6 +7,8 @@ import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cliente.exception.ClienteNoEn
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cuenta.dto.CuentaRequest;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cuenta.dto.CuentaResponse;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cuenta.exception.CuentaNoEncontradaException;
+import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.Usuario;
+import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.UsuarioRepository;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import org.springframework.stereotype.Service;
@@ -19,19 +21,35 @@ public class CuentaService {
 
     private final CuentaRepository cuentaRepository;
     private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public CuentaService(
             CuentaRepository cuentaRepository,
-            ClienteRepository clienteRepository) {
+            ClienteRepository clienteRepository,
+            UsuarioRepository usuarioRepository) {
         this.cuentaRepository = cuentaRepository;
         this.clienteRepository = clienteRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
-    public CuentaResponse crear(CuentaRequest request) {
-        Cliente cliente = clienteRepository.findById(request.getClienteId())
-                .orElseThrow(() -> new ClienteNoEncontradoException(
-                        "No existe el cliente con id " + request.getClienteId()));
+    public CuentaResponse crear(CuentaRequest request, String username, boolean manager) {
+        Usuario user = usuarioRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new ClienteNoEncontradoException("Cliente no encontrado"));
+        Cliente cliente;
+        if (!manager) {
+            cliente = user.getCliente();
+            if (cliente == null)
+                throw new ClienteNoEncontradoException("Cliente no encontrado");
+        } else if (request.getIdCliente() != null && !request.getIdCliente().isBlank()) {
+            cliente = clienteRepository.findByIdCliente(request.getIdCliente())
+                    .orElseThrow(() -> new ClienteNoEncontradoException("Cliente no encontrado"));
+        } else {
+            cliente = request.getClienteId() == null ? null
+                    : clienteRepository.findById(request.getClienteId()).orElse(null);
+            if (cliente == null)
+                throw new ClienteNoEncontradoException("Cliente no encontrado");
+        }
 
         if (!cliente.isActivo()) {
             throw new ClienteInactivoException(
@@ -39,8 +57,8 @@ public class CuentaService {
         }
 
         Cuenta cuenta = new Cuenta();
-        cuenta.setNumeroCuenta(generarNumeroCuenta(request.getTipo()));
-        cuenta.setTipo(request.getTipo());
+        cuenta.setNumeroCuenta(generarNumeroCuenta(request.tipoSolicitado()));
+        cuenta.setTipo(request.tipoSolicitado());
         cuenta.setSaldo(BigDecimal.ZERO);
         cuenta.setActiva(true);
         cuenta.setCliente(cliente);
@@ -49,10 +67,17 @@ public class CuentaService {
     }
 
     @Transactional(readOnly = true)
-    public CuentaResponse consultarPorNumero(String numero) {
+    public CuentaResponse consultarPorNumero(String numero, String username, boolean manager) {
         Cuenta cuenta = cuentaRepository.findByNumeroCuenta(numero)
                 .orElseThrow(() -> new CuentaNoEncontradaException(
-                        "No existe la cuenta con número " + numero));
+                        "Cuenta no encontrada"));
+        if (!manager) {
+            Usuario user = usuarioRepository.findByUsernameIgnoreCase(username)
+                    .orElseThrow(() -> new CuentaNoEncontradaException("Cuenta no encontrada"));
+            if (user.getCliente() == null || !user.getCliente().getId().equals(cuenta.getCliente().getId())) {
+                throw new CuentaNoEncontradaException("Cuenta no encontrada");
+            }
+        }
         return toResponse(cuenta);
     }
 
