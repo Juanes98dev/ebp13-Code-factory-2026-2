@@ -2,6 +2,7 @@ package ebp13.fabrica.escuela.ebp13_fabrica_escuela.transaccion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -159,6 +160,42 @@ class TransaccionQueryServiceTest {
     }
 
     @Test
+    void nullAccountSidesAreSafeAndStillDetermineDirection() {
+        TestClient owner = createClient("null-account-sides");
+        Cuenta account = createAccount(owner, "301-000-0015-15");
+        saveTransaction(TipoTransaccion.CONSIGNACION, null, account.getNumeroCuenta(),
+                LocalDateTime.of(2026, 10, 1, 9, 0));
+        saveTransaction(TipoTransaccion.RETIRO, account.getNumeroCuenta(), null,
+                LocalDateTime.of(2026, 10, 1, 10, 0));
+
+        List<TransaccionHistorialResponse> results = history(owner.username(), account);
+
+        assertEquals(2, results.size());
+        assertEquals("enviada", results.get(0).direccion());
+        assertEquals("recibida", results.get(1).direccion());
+    }
+
+    @Test
+    void detailDirectionCanBeRelativeToAnExplicitOwnedAccountAndIncludesDescription() throws Exception {
+        TestClient owner = createClient("detail-account-direction");
+        Cuenta source = createAccount(owner, "301-000-0016-16");
+        Cuenta destination = createAccount(owner, "501-000-0017-17");
+        Transaccion transfer = saveTransaction(TipoTransaccion.TRANSFERENCIA,
+                source.getNumeroCuenta(), destination.getNumeroCuenta(), LocalDateTime.of(2026, 10, 1, 12, 0));
+        transfer.setDescripcion("Traslado entre mis cuentas");
+        transacciones.saveAndFlush(transfer);
+        Usuario user = usuarios.findByUsernameIgnoreCase(owner.username()).orElseThrow();
+
+        mockMvc.perform(get("/api/transacciones/{identifier}", transfer.getReferencia())
+                .header("Authorization", "Bearer " + tokenService.create(user))
+                .param("cuenta", destination.getNumeroCuenta()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.direccion").value("recibida"))
+                .andExpect(jsonPath("$.tipo").value("TRANSFERENCIA"))
+                .andExpect(jsonPath("$.descripcion").value("Traslado entre mis cuentas"));
+    }
+
+    @Test
     void dateOnlyUntilIncludesTransactionsThroughEndOfThatDay() throws Exception {
         TestClient owner = createClient("date-only-until");
         Cuenta account = createAccount(owner, "301-000-0012-12");
@@ -253,6 +290,7 @@ class TransaccionQueryServiceTest {
         transaction.setCuentaOrigen(source);
         transaction.setCuentaDestino(destination);
         transaction.setFecha(date);
+        transaction.setDescripcion("Transacción de prueba");
         return transacciones.saveAndFlush(transaction);
     }
 

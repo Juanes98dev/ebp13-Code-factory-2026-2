@@ -96,7 +96,9 @@ public class TransaccionController {
 
     @GetMapping("/{identifier}")
     public ResponseEntity<TransaccionHistorialResponse> detalle(
-            @AuthenticationPrincipal String username, @PathVariable String identifier) {
-        return ResponseEntity.ok(transaccionQueryService.detail(username, identifier));
+            @AuthenticationPrincipal String username,
+            @PathVariable String identifier,
+            @RequestParam(required = false) String cuenta) {
+        return ResponseEntity.ok(transaccionQueryService.detail(username, identifier, cuenta));
     }
 }

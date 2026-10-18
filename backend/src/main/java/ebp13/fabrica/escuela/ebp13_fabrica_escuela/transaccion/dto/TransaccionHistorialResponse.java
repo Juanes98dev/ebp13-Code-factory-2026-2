@@ -8,5 +8,5 @@ import java.time.LocalDateTime;
 public record TransaccionHistorialResponse(Long id, String referencia,
         TipoTransaccion tipo, String direccion, BigDecimal monto,
         LocalDateTime fecha, String cuentaOrigen, String cuentaDestino,
-        EstadoTransaccion estado) {
+        EstadoTransaccion estado, String descripcion) {
 }
