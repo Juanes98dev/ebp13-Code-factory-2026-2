@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -174,8 +174,8 @@ class TransaccionQueryServiceTest {
         assertEquals(1, results.size());
         assertEquals(lastMoment.getReferencia(), results.getFirst().referencia());
         mockMvc.perform(get("/api/transacciones/cuentas/{accountNumber}/historial", account.getNumeroCuenta())
-                        .header("Authorization", "Bearer " + tokenService.create(user))
-                        .param("hasta", "2026-10-15"))
+                .header("Authorization", "Bearer " + tokenService.create(user))
+                .param("hasta", "2026-10-15"))
                 .andExpect(status().isOk());
     }
 
@@ -186,9 +186,9 @@ class TransaccionQueryServiceTest {
         Usuario user = usuarios.findByUsernameIgnoreCase(owner.username()).orElseThrow();
 
         mockMvc.perform(get("/api/transacciones/cuentas/{accountNumber}/historial", account.getNumeroCuenta())
-                        .header("Authorization", "Bearer " + tokenService.create(user))
-                        .param("desde", "2026-10-16T00:00:00")
-                        .param("hasta", "2026-10-15T23:59:59"))
+                .header("Authorization", "Bearer " + tokenService.create(user))
+                .param("desde", "2026-10-16T00:00:00")
+                .param("hasta", "2026-10-15T23:59:59"))
                 .andExpect(status().isBadRequest());
     }
 

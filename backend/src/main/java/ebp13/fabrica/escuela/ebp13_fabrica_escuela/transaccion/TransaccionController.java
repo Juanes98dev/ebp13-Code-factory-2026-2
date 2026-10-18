@@ -7,7 +7,6 @@ import ebp13.fabrica.escuela.ebp13_fabrica_escuela.transaccion.dto.Transferencia
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.transaccion.dto.TransaccionHistorialResponse;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 
 @RestController
 @RequestMapping("/api/transacciones")
@@ -70,9 +72,26 @@ public class TransaccionController {
     public ResponseEntity<List<TransaccionHistorialResponse>> historial(
             @AuthenticationPrincipal String username,
             @PathVariable String accountNumber,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
-        return ResponseEntity.ok(transaccionQueryService.history(username, accountNumber, desde, hasta));
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta) {
+        return ResponseEntity.ok(transaccionQueryService.history(username, accountNumber,
+                parseDateTime(desde, false), parseDateTime(hasta, true)));
+    }
+
+    private LocalDateTime parseDateTime(String value, boolean endOfDay) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            if (value.length() == 10) {
+                LocalDate date = LocalDate.parse(value);
+                return endOfDay ? date.atTime(LocalTime.MAX) : date.atStartOfDay();
+            }
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException exception) {
+            throw new IllegalArgumentException(
+                    "Las fechas deben usar formato ISO (yyyy-MM-dd o yyyy-MM-dd'T'HH:mm:ss)");
+        }
     }
 
     @GetMapping("/{identifier}")
