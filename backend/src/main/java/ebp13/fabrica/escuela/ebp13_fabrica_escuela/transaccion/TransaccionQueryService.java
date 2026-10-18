@@ -27,11 +27,11 @@ public class TransaccionQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransaccionHistorialResponse> history(String username, Long accountId,
+    public List<TransaccionHistorialResponse> history(String username, String accountNumber,
             LocalDateTime desde, LocalDateTime hasta) {
         validateDateRange(desde, hasta);
         Cliente client = findClient(username);
-        Cuenta account = findOwnedAccount(accountId, client);
+        Cuenta account = findOwnedAccount(accountNumber, client);
         List<String> ownAccountNumbers = cuentas.findByCliente_Id(client.getId()).stream()
                 .map(Cuenta::getNumeroCuenta).toList();
         return transacciones.findByCuentaOrigenInOrCuentaDestinoInOrderByFechaDesc(
@@ -41,7 +41,7 @@ public class TransaccionQueryService {
                 .filter(transaction -> transaction.getCuentaOrigen().equals(account.getNumeroCuenta())
                         || transaction.getCuentaDestino().equals(account.getNumeroCuenta()))
                 .map(transaction -> toResponse(transaction,
-                        ownAccountNumbers.contains(transaction.getCuentaOrigen()) ? "ENVIADA" : "RECIBIDA"))
+                        transaction.getCuentaOrigen().equals(account.getNumeroCuenta()) ? "enviada" : "recibida"))
                 .toList();
     }
 
@@ -62,7 +62,7 @@ public class TransaccionQueryService {
                 || ownAccountNumbers.contains(transaction.getCuentaDestino());
         if (!involved)
             throw transactionNotFound();
-        String direction = ownAccountNumbers.contains(transaction.getCuentaOrigen()) ? "ENVIADA" : "RECIBIDA";
+        String direction = ownAccountNumbers.contains(transaction.getCuentaOrigen()) ? "enviada" : "recibida";
         return toResponse(transaction, direction);
     }
 
@@ -74,8 +74,8 @@ public class TransaccionQueryService {
         return user.getCliente();
     }
 
-    private Cuenta findOwnedAccount(Long accountId, Cliente client) {
-        Cuenta account = cuentas.findById(accountId)
+    private Cuenta findOwnedAccount(String accountNumber, Cliente client) {
+        Cuenta account = cuentas.findByNumeroCuenta(accountNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("CUENTA_NO_ENCONTRADA", "Cuenta no encontrada"));
         if (!account.getCliente().getId().equals(client.getId())) {
             throw new ResourceNotFoundException("CUENTA_NO_ENCONTRADA", "Cuenta no encontrada");

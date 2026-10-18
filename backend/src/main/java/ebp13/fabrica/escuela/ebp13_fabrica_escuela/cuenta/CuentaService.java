@@ -11,6 +11,7 @@ import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.Usuario;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.UsuarioRepository;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +80,20 @@ public class CuentaService {
             }
         }
         return toResponse(cuenta);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CuentaResponse> listar(String username, boolean manager) {
+        if (manager) {
+            return cuentaRepository.findAll().stream().map(this::toResponse).toList();
+        }
+        Usuario user = usuarioRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new CuentaNoEncontradaException("Cuenta no encontrada"));
+        if (user.getCliente() == null) {
+            throw new CuentaNoEncontradaException("Cuenta no encontrada");
+        }
+        return cuentaRepository.findByCliente_Id(user.getCliente().getId()).stream()
+                .map(this::toResponse).toList();
     }
 
     private String generarNumeroCuenta(TipoCuenta tipo) {

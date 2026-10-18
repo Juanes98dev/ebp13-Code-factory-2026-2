@@ -5,6 +5,7 @@ import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cliente.dto.ClienteResponse;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cliente.exception.CedulaDuplicadaException;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cliente.exception.CedulaInvalidaException;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.shared.exception.ResourceNotFoundException;
+import ebp13.fabrica.escuela.ebp13_fabrica_escuela.shared.exception.ResourceConflictException;
 import java.security.SecureRandom;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class ClienteService {
         if (clienteRepository.existsByCedula(request.getCedula())) {
             throw new CedulaDuplicadaException(
                     "La cédula ya está registrada");
+        }
+        if (request.getEmail() != null && clienteRepository.existsByEmail(request.getEmail())) {
+            throw new ResourceConflictException("EMAIL_DUPLICADO", "El correo electrónico ya está registrado");
         }
 
         Cliente cliente = new Cliente();

@@ -12,13 +12,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/transacciones")
@@ -35,7 +35,7 @@ public class TransaccionController {
 
     @PostMapping("/transferencia")
     public ResponseEntity<TransaccionResponse> transferir(
-            @RequestBody TransferenciaRequest request,
+            @Valid @RequestBody TransferenciaRequest request,
             @AuthenticationPrincipal String username) {
         TransaccionResponse response = transaccionService.transferir(
                 request.getCuentaOrigen(),
@@ -47,7 +47,7 @@ public class TransaccionController {
 
     @PostMapping("/retiro")
     public ResponseEntity<TransaccionResponse> retirar(
-            @RequestBody RetiroRequest request,
+            @Valid @RequestBody RetiroRequest request,
             @AuthenticationPrincipal String username) {
         TransaccionResponse response = transaccionService.retirar(
                 request.getNumeroCuenta(),
@@ -57,7 +57,7 @@ public class TransaccionController {
 
     @PostMapping("/consignacion")
     public ResponseEntity<TransaccionResponse> consignar(
-            @RequestBody ConsignacionRequest request,
+            @Valid @RequestBody ConsignacionRequest request,
             @AuthenticationPrincipal String username) {
         TransaccionResponse response = transaccionService.consignar(
                 request.getCuentaDestino(),
@@ -66,13 +66,13 @@ public class TransaccionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/cuentas/{accountId}/historial")
+    @GetMapping("/cuentas/{accountNumber}/historial")
     public ResponseEntity<List<TransaccionHistorialResponse>> historial(
             @AuthenticationPrincipal String username,
-            @PathVariable Long accountId,
+            @PathVariable String accountNumber,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
-        return ResponseEntity.ok(transaccionQueryService.history(username, accountId, desde, hasta));
+        return ResponseEntity.ok(transaccionQueryService.history(username, accountNumber, desde, hasta));
     }
 
     @GetMapping("/{identifier}")

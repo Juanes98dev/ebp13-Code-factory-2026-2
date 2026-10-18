@@ -3,10 +3,12 @@ package ebp13.fabrica.escuela.ebp13_fabrica_escuela.security;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.ChangeCredentialsRequest;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.LoginRequest;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.LoginResponse;
+import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.MeResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -28,6 +30,11 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request.username(), request.password());
+    }
+
+    @GetMapping("/me")
+    public MeResponse me(Authentication authentication) {
+        return authService.me(authentication.getName());
     }
 
     @PostMapping("/logout")

@@ -5,6 +5,7 @@ import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cliente.ClienteRepository;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.ChangeCredentialsRequest;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.CreateClientUserRequest;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.LoginResponse;
+import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.dto.MeResponse;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.exception.AccountLockedException;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.security.exception.AuthenticationFailedException;
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.shared.exception.ResourceConflictException;
@@ -112,6 +113,19 @@ public class AuthService {
                     "La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y símbolo");
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+    }
+
+    @Transactional(readOnly = true)
+    public MeResponse me(String username) {
+        Usuario user = usuarios.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new ResourceNotFoundException("USUARIO_NO_ENCONTRADO", "Usuario no encontrado"));
+        Cliente client = user.getCliente();
+        String clientId = client == null ? null : client.getIdCliente();
+        String name = client == null ? user.getRole().name()
+                : String.join(" ", java.util.stream.Stream.of(client.getPrimerNombre(), client.getSegundoNombre(),
+                        client.getPrimerApellido(), client.getSegundoApellido())
+                        .filter(value -> value != null && !value.isBlank()).toList());
+        return new MeResponse(user.getUsername(), user.getRole(), clientId, name);
     }
 
     @Transactional

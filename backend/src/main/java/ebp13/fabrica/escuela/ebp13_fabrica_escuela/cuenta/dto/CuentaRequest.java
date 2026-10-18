@@ -1,6 +1,7 @@
 package ebp13.fabrica.escuela.ebp13_fabrica_escuela.cuenta.dto;
 
 import ebp13.fabrica.escuela.ebp13_fabrica_escuela.cuenta.TipoCuenta;
+import jakarta.validation.constraints.AssertTrue;
 
 public class CuentaRequest {
 
@@ -46,5 +47,10 @@ public class CuentaRequest {
 
     public TipoCuenta tipoSolicitado() {
         return tipo != null ? tipo : tipoCuenta;
+    }
+
+    @AssertTrue(message = "El tipo de cuenta es obligatorio")
+    public boolean isTipoValido() {
+        return tipoSolicitado() != null;
     }
 }

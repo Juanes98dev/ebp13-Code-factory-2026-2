@@ -12,4 +12,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     Optional<Cliente> findByCedula(String cedula);
 
     Optional<Cliente> findByIdCliente(String idCliente);
+
+    boolean existsByEmail(String email);
 }

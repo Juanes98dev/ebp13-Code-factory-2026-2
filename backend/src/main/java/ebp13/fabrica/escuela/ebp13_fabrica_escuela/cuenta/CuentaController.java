@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
+import jakarta.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cuentas")
@@ -23,11 +25,19 @@ public class CuentaController {
     }
 
     @PostMapping
-    public ResponseEntity<CuentaResponse> crear(@RequestBody CuentaRequest request, Authentication authentication) {
+    public ResponseEntity<CuentaResponse> crear(@Valid @RequestBody CuentaRequest request,
+            Authentication authentication) {
         boolean manager = authentication.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_GESTOR"));
         CuentaResponse response = cuentaService.crear(request, authentication.getName(), manager);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CuentaResponse>> listar(Authentication authentication) {
+        boolean manager = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_GESTOR"));
+        return ResponseEntity.ok(cuentaService.listar(authentication.getName(), manager));
     }
 
     @GetMapping("/{numero}")

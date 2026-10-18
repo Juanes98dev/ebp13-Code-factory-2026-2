@@ -6,5 +6,5 @@ public record ChangeCredentialsRequest(
         @NotBlank String currentPassword,
         String newUsername,
         String newPassword,
-        String confirmNewPassword) { }
+        String confirmNewPassword) {
 }
