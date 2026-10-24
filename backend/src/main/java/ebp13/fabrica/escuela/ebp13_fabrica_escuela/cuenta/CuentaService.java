@@ -95,6 +95,17 @@ public class CuentaService {
         return cuentaRepository.findByCliente_Id(user.getCliente().getId()).stream()
                 .map(this::toResponse).toList();
     }
+    
+    @Transactional(readOnly = true)
+    public List<CuentaResponse> listarPorCliente(Long clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new ClienteNoEncontradoException("Cliente no encontrado");
+        }
+
+        return cuentaRepository.findByCliente_Id(clienteId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
     private String generarNumeroCuenta(TipoCuenta tipo) {
         String prefijo;
